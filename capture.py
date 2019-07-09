@@ -106,14 +106,30 @@ def sleep_next_capture(interval: int):
     # TODO: handle sunset/sunrise stuff, don't bother capturing when it's dark out
     # TODO: enable capture on startup
     # TODO: ensure that captures happen on the minute/on the hour
+    # TODO: handle when captures and actions take a variable amount of time
     time.sleep(interval)
 
+def run_actions_on_file(file: str, actions: dict, config) -> bool:
+    """
+    Run Actions on File
+    """
+    for action in config["post_capture_methods"]:
+        a = actions[action]
+        result = a.run(file)
+        if not result:
+            print('action', action, ' failed on file', file)
+            return False
+    return True
 
 if __name__ == "__main__":
     # first-time setup
     modules = load_capture_types()
     actions = load_action_types()
     config = load_config()
+
+    # queue of all files to process
+    # if one step fails, then requeue it and retry all steps in order
+    action_queue = []
 
     # TODO: proper logging
     print('starting')
@@ -135,7 +151,14 @@ if __name__ == "__main__":
         m = get_capture_method(modules, method)
         capture_image(path, m)
 
-        # run each action in order on the file
-        for action in config["post_capture_methods"]:
-            a = actions[action]
-            a.run(path)
+        action_queue.append(path)
+
+        while action_queue:
+            f = action_queue.pop()
+            # run each action in order on the file
+            result = run_actions_on_file(f, actions, config)
+            # on fail, queue
+            if not result:
+                print('actions for file', f, 'failed, so adding to queue')
+                action_queue.append(f)
+                break

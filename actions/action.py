@@ -15,7 +15,7 @@ class Action(ABC):
         pass
 
     @abstractmethod
-    def run(self, file_path: str):
+    def run(self, file_path: str) -> bool:
         """
         Run
 
