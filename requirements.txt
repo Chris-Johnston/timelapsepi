@@ -1,1 +1,4 @@
+azure-storage-blob
 azure-storage
+cryptography==2.5
+pyyaml

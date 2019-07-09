@@ -12,5 +12,7 @@ class RemoveFileAction(Action):
         return "remove"
     
     def run(self, file: str):
+        # TODO: proper logging
+        print("removefileaction: ", file)
         os.remove(file)
     

@@ -13,9 +13,18 @@ import inspect
 import os
 import time
 import datetime
+import yaml
 
 from invalidmethodexception import InvalidMethodException
 from capture.capturemethod import CaptureMethod
+from actions.action import Action
+
+config_file = 'config.yaml'
+
+def load_config():
+    with open(config_file, "r") as ymlfile:
+        config = yaml.load(ymlfile, Loader=yaml.FullLoader)
+    return config
 
 # all of the modules to load that implement CaptureMethod
 # these are the various ways to capture from the webcam
@@ -47,16 +56,24 @@ def load_action_types() -> dict:
 
     Loads all of the Action types.
     """
-    pass
+    actions = {}
+    for a in load_actions:
+        mod = importlib.import_module(a)
+        for name, obj in inspect.getmembers(mod):
+            if obj is not Action and isinstance(obj, type) and issubclass(obj, Action):
+                instance = obj()
+                name = instance.get_name()
+                actions[name] = instance
+    return actions
 
-def get_image_path() -> str:
+def get_image_path(directory: str) -> str:
     """
     Get Image Path
 
     Generates the path of the next image to save.
     """
     now = datetime.datetime.now()
-    return os.path.join('images', f'{now.date().isoformat()}', f'{now.time().strftime("%H:%M:%S")}.jpg')
+    return os.path.join(directory, f'{now.date().isoformat()}', f'{now.time().strftime("%H:%M:%S")}.jpg')
 
 def create_path(path: str):
     """
@@ -82,34 +99,43 @@ def capture_image(path: str, method: CaptureMethod):
     """
     method.capture_image(path)
 
-def sleep_next_capture():
+def sleep_next_capture(interval: int):
     """
     Sleeps until the next image capture is ready.
     """
     # TODO: handle sunset/sunrise stuff, don't bother capturing when it's dark out
     # TODO: enable capture on startup
     # TODO: ensure that captures happen on the minute/on the hour
-    time.sleep(5)
+    time.sleep(interval)
 
 
 if __name__ == "__main__":
     # first-time setup
     modules = load_capture_types()
+    actions = load_action_types()
+    config = load_config()
 
     # TODO: proper logging
     print('starting')
 
     # background daemon
     while True:
-        sleep_next_capture()
+        print('waiting for next capture')
+        sleep_next_capture(config["interval"])
         print('Starting webcam capture')
 
-        path = get_image_path()
+        path = get_image_path(config["capture_directory"])
         # create directory if it doesn't exist
         create_path(path)
 
         print('Saving to file:', path)
 
-        method = 'webcam'
+        # capture the image using the preferred method
+        method = config["capture_method"]
         m = get_capture_method(modules, method)
         capture_image(path, m)
+
+        # run each action in order on the file
+        for action in config["post_capture_methods"]:
+            a = actions[action]
+            a.run(path)

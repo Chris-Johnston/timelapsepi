@@ -11,5 +11,7 @@ class WebcamCapture(CaptureMethod):
         return "webcam"
 
     def capture_image(self, path: str):
+        # TODO: proper logging
+        print("webcamcapture: capturing")
         command = f'fswebcam -p YUYV -S 20 --no-banner --resolution 1920x1080 --quiet {path}'
         os.system(command)
