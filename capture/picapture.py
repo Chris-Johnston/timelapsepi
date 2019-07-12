@@ -1,24 +1,26 @@
 """
 Raspberry Pi Camera Capture
 
+Captures using the raspberry pi camera
 """
 
 from capture.capturemethod import CaptureMethod
 import time
 import yaml
+import logging
+logger = logging.getLogger(__name__)
 
 config_file = 'config.yaml'
-
 ATTR_PI = 'pi_camera'
 
 class PiCapture(CaptureMethod):
     def __init__(self):
-        print('setting up pi camera')
         # hack, this gets around picamera not available for hosts that aren't Pis
         # so only import and set up on first use
         self.is_setup = False
     
     def setup(self):
+        logger.info("Setting up the Pi Capture method.")
         import picamera
         with open(config_file, "r") as ymlfile:
             config = yaml.load(ymlfile, Loader=yaml.FullLoader)
@@ -37,6 +39,7 @@ class PiCapture(CaptureMethod):
         return "picam"
 
     def capture_image(self, path: str):
+        logger.info("Capturing from raspberry pi camera.")
         # do first-time setup
         if not self.is_setup:
             self.setup()

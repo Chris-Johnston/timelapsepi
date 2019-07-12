@@ -23,3 +23,4 @@ class CaptureMethod(ABC):
 
         Captures an image from a camera source, and saves it to the file.
         """
+        pass
