@@ -14,17 +14,33 @@ import os
 import time
 import datetime
 import yaml
+import logging
 
 from invalidmethodexception import InvalidMethodException
 from capture.capturemethod import CaptureMethod
 from actions.action import Action
 
+log_format = '%(asctime)s %(levelname)s: %(message)s'
 config_file = 'config.yaml'
 
 def load_config():
     with open(config_file, "r") as ymlfile:
         config = yaml.load(ymlfile, Loader=yaml.FullLoader)
     return config
+
+config = load_config()
+
+# setup logging
+numeric_log_level = getattr(logging, config["log_level"].upper(), logging.DEBUG)
+logging.basicConfig(filename=config["logs"], level=numeric_log_level, format=log_format)
+
+# log to console window and log file
+consoleHandler = logging.StreamHandler()
+consoleHandler.setFormatter(logging.Formatter(log_format))
+logging.getLogger().addHandler(consoleHandler)
+
+logger = logging.getLogger(__name__)
+logger.info("Starting timelapse application.")
 
 # all of the modules to load that implement CaptureMethod
 # these are the various ways to capture from the webcam
@@ -47,7 +63,8 @@ def load_capture_types() -> dict:
             if obj is not CaptureMethod and isinstance(obj, type) and issubclass(obj, CaptureMethod):
                 instance = obj()
                 name = instance.get_name()
-                modules[name] = instance
+                logger.debug(f"Loaded capture method {name}")
+                modules[name] = instance 
     return modules
 
 def load_action_types() -> dict:
@@ -63,6 +80,7 @@ def load_action_types() -> dict:
             if obj is not Action and isinstance(obj, type) and issubclass(obj, Action):
                 instance = obj()
                 name = instance.get_name()
+                logger.debug(f"Loaded action type {name}")
                 actions[name] = instance
     return actions
 
@@ -81,6 +99,7 @@ def create_path(path: str):
     """
     directory = os.path.dirname(os.path.abspath(path))
     if not os.path.exists(directory):
+        logger.info(f"Creating path {directory} because it did not yet exist.")
         os.makedirs(directory)
 
 def get_capture_method(modules: dict, method: str) -> CaptureMethod:
@@ -103,6 +122,7 @@ def sleep_next_capture(interval: int):
     """
     Sleeps until the next image capture is ready.
     """
+    logger.info(f"Starting sleep interval of {interval}.")
     # TODO: handle sunset/sunrise stuff, don't bother capturing when it's dark out
     # TODO: enable capture on startup
     # TODO: ensure that captures happen on the minute/on the hour
@@ -117,7 +137,7 @@ def run_actions_on_file(file: str, actions: dict, config) -> bool:
         a = actions[action]
         result = a.run(file)
         if not result:
-            print('action', action, ' failed on file', file)
+            logger.info(f"Action '{a.get_name()}' failed on file: {file}")
             return False
     return True
 
@@ -125,32 +145,26 @@ if __name__ == "__main__":
     # first-time setup
     modules = load_capture_types()
     actions = load_action_types()
-    config = load_config()
-
     # queue of all files to process
     # if one step fails, then requeue it and retry all steps in order
     action_queue = []
 
-    # TODO: proper logging
-    print('starting')
-
     # background daemon
     while True:
-        print('waiting for next capture')
+        logger.info("Waiting for next capture.")
         sleep_next_capture(config["interval"])
-        print('Starting webcam capture')
+        logger.info("Starting next capture.")
 
         path = get_image_path(config["capture_directory"])
         # create directory if it doesn't exist
         create_path(path)
-
-        print('Saving to file:', path)
+        logger.info(f"Saving next image to path: {path}")
 
         # capture the image using the preferred method
         method = config["capture_method"]
         m = get_capture_method(modules, method)
+        logger.info(f"Capturing image using {method} method to file {path}")
         capture_image(path, m)
-
         action_queue.append(path)
 
         while action_queue:
@@ -159,6 +173,7 @@ if __name__ == "__main__":
             result = run_actions_on_file(f, actions, config)
             # on fail, queue
             if not result:
-                print('actions for file', f, 'failed, so adding to queue')
+                logger.info(f"Actions for file {f} failed, adding to queue.")
+                logger.debug(f"Queue: {' '.join(action_queue)}")
                 action_queue.append(f)
                 break
