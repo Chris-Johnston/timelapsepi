@@ -11,6 +11,7 @@ from azure.common import AzureException
 from azure.storage.blob import BlockBlobService
 import yaml
 import os
+import urllib
 
 config_file = 'config.yaml'
 
@@ -32,6 +33,16 @@ class AzureUploadAction(Action):
 
     def get_name(self):
         return 'azure_upload'
+    
+    def check_online(self):
+        """
+        Checks if the internet connection is up
+        """
+        try:
+            urllib.request.urlopen('http://microsoft.com')
+            return True
+        except:
+            return False
 
     def run(self, file: str) -> bool:
         print("azure upload action: ", file)
@@ -42,13 +53,21 @@ class AzureUploadAction(Action):
         while self.upload_queue:
             f = self.upload_queue.pop()
             print('processing file', f)
-            try:
-                print('uploaded file', f)
-                self.blob_service.create_blob_from_path(self.blob_container, f, f, max_connections=1, timeout=self.timeout)
-            except AzureException:
-                print('error while uploading, likely not connected. queueing file and dealing with it later.')
-                # likely not connected to the internet, add this to the queue
-                # and stop processing the queue
+
+            # check if connected before attempting upload
+            if self.check_online():
+                try:
+                    print('uploaded file', f)
+                    self.blob_service.create_blob_from_path(self.blob_container, f, f, max_connections=1, timeout=self.timeout)
+                except AzureException:
+                    print('error while uploading, likely not connected. queueing file and dealing with it later.')
+                    # likely not connected to the internet, add this to the queue
+                    # and stop processing the queue
+                    self.upload_queue.append(f)
+                    return False
+            else:
+                print('not connected, queueing.')
+                # not connected, so just add to the queue
                 self.upload_queue.append(f)
                 return False
         return True
