@@ -37,3 +37,5 @@ pi_camera:
 logs: timelapse.log
 log_level: DEBUG
 ```
+
+This file can be ignored using `git update-index --assume-unchanged config.yaml`
