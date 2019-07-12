@@ -127,9 +127,11 @@ def sleep_next_capture(interval: int, min_time: int, max_time: int):
     day_second = current_time.microsecond / 100.0 + current_time.second + (60 * current_time.minute) + (360 * current_time.hour)
 
     if day_second < min_time:
+        logger.info(f"Current time {day_second}, waiting until {min_time} (less than min time {min_time}). {day_second - min_time}")
         # if before min, sleep until then
         time.sleep(day_second - min_time)
     elif day_second > max_time:
+        logger.info(f"Current time {day_second}, waiting until {min_time} (greater than max time {max_time}). {min_time + (24 * 360) - day_second}")
         # if after max, wait remaining duration of day + min time
         time.sleep(min_time + (24 * 360) - day_second)
     
