@@ -28,7 +28,7 @@ def load_config():
 
 # all of the modules to load that implement CaptureMethod
 # these are the various ways to capture from the webcam
-capture_methods = ['capture.webcamcapture']
+capture_methods = ['capture.webcamcapture', 'capture.picapture']
 
 load_actions = ['actions.azureuploadaction', 'actions.removefileaction']
 
