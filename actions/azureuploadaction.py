@@ -11,7 +11,7 @@ from azure.common import AzureException
 from azure.storage.blob import BlockBlobService
 import yaml
 import os
-import urllib
+import urllib.request
 import logging
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class AzureUploadAction(Action):
         Checks if the internet connection is up
         """
         try:
-            urllib.request.urlopen('http://microsoft.com')
+            urllib.request.urlopen('http://www.github.com', timeout=1)
             logger.debug("Internet connection is up.")
             return True
         except:
@@ -51,6 +51,7 @@ class AzureUploadAction(Action):
         if self.check_online():
             try:
                 self.blob_service.create_blob_from_path(self.blob_container, file, file, max_connections=1, timeout=self.timeout)
+                return True
             except AzureException as ex:
                 logging.warning(f"Error while uploading to Azure while online: {ex}")
                 return False

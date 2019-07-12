@@ -169,6 +169,7 @@ if __name__ == "__main__":
 
         while action_queue:
             f = action_queue.pop()
+            logging.info(f"Processing item {f} in queue.")
             # run each action in order on the file
             result = run_actions_on_file(f, actions, config)
             # on fail, queue
