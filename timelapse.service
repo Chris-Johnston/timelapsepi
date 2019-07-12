@@ -1,0 +1,14 @@
+[Unit]
+Description=Timelapse camera service.
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/pi/timelapsepi
+ExecStart=/usr/bin/python3 -u /home/pi/timelapsepi/capture.py
+Restart=on-failure
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
