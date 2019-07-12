@@ -122,12 +122,16 @@ def sleep_next_capture(interval: int):
     """
     Sleeps until the next image capture is ready.
     """
-    logger.info(f"Starting sleep interval of {interval}.")
+
+    # get the current second in the day
+    current_time = datetime.datetime.now().time()
+    day_second = current_time.microsecond / 100.0 + current_time.second + (60 * current_time.minute) + (360 * current_time.hour)
+
     # TODO: handle sunset/sunrise stuff, don't bother capturing when it's dark out
-    # TODO: enable capture on startup
-    # TODO: ensure that captures happen on the minute/on the hour
-    # TODO: handle when captures and actions take a variable amount of time
-    time.sleep(interval)
+    
+    actual_delay = interval - (day_second % interval)
+    logger.info(f"Starting sleep interval of {interval} for {actual_delay}.")
+    time.sleep(day_second % interval)
 
 def run_actions_on_file(file: str, actions: dict, config) -> bool:
     """
