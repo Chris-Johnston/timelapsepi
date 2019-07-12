@@ -118,16 +118,20 @@ def capture_image(path: str, method: CaptureMethod):
     """
     method.capture_image(path)
 
-def sleep_next_capture(interval: int):
+def sleep_next_capture(interval: int, min_time: int, max_time: int):
     """
     Sleeps until the next image capture is ready.
     """
-
     # get the current second in the day
     current_time = datetime.datetime.now().time()
     day_second = current_time.microsecond / 100.0 + current_time.second + (60 * current_time.minute) + (360 * current_time.hour)
 
-    # TODO: handle sunset/sunrise stuff, don't bother capturing when it's dark out
+    if day_second < min_time:
+        # if before min, sleep until then
+        time.sleep(day_second - min_time)
+    elif day_second > max_time:
+        # if after max, wait remaining duration of day + min time
+        time.sleep(min_time + (24 * 360) - day_second)
     
     actual_delay = interval - (day_second % interval)
     logger.info(f"Starting sleep interval of {interval} for {actual_delay}.")
@@ -156,7 +160,7 @@ if __name__ == "__main__":
     # background daemon
     while True:
         logger.info("Waiting for next capture.")
-        sleep_next_capture(config["interval"])
+        sleep_next_capture(config["interval"], config["limit"]["min_time_seconds"], config["limit"]["max_time_seconds"])
         logger.info("Starting next capture.")
 
         path = get_image_path(config["capture_directory"])
