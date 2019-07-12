@@ -13,5 +13,6 @@ class WebcamCapture(CaptureMethod):
     def capture_image(self, path: str):
         # TODO: proper logging
         print("webcamcapture: capturing")
+        # this is a hack, we won't actually use the usb webcam when deployed
         command = f'fswebcam -p YUYV -S 20 --no-banner --resolution 1920x1080 --quiet {path}'
         os.system(command)
