@@ -124,16 +124,16 @@ def sleep_next_capture(interval: int, min_time: int, max_time: int):
     """
     # get the current second in the day
     current_time = datetime.datetime.now().time()
-    day_second = current_time.microsecond / 100.0 + current_time.second + (60 * current_time.minute) + (360 * current_time.hour)
-
+    day_second = (current_time.microsecond / 1000000.0) + current_time.second + (60 * current_time.minute) + (3600 * current_time.hour)
+    
     if day_second < min_time:
-        logger.info(f"Current time {day_second}, waiting until {min_time} (less than min time {min_time}). {day_second - min_time}")
+        logger.info(f"Current time {day_second}, waiting until {min_time} (less than min time {min_time}). {min_time - day_second}")
         # if before min, sleep until then
-        time.sleep(day_second - min_time)
+        time.sleep(min_time - day_second)
     elif day_second > max_time:
-        logger.info(f"Current time {day_second}, waiting until {min_time} (greater than max time {max_time}). {min_time + (24 * 360) - day_second}")
+        logger.info(f"Current time {day_second}, waiting until {min_time} (greater than max time {max_time}). {min_time + (24 * 3600) - day_second}")
         # if after max, wait remaining duration of day + min time
-        time.sleep(min_time + (24 * 360) - day_second)
+        time.sleep(min_time + (24 * 3600) - day_second)
     
     actual_delay = interval - (day_second % interval)
     logger.info(f"Starting sleep interval of {interval} for {actual_delay}.")
