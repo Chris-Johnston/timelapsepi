@@ -25,12 +25,16 @@ class PiCapture(CaptureMethod):
         self.dimensions = (x, y)
         self.iso = config[ATTR_PI]['iso']
         self.delay = config[ATTR_PI]['delay']
+        # only create this once, memory issues
         self.c = picamera.PiCamera(resolution=self.dimensions)
+        # led off while not capturing
+        self.c.led = False
 
     def get_name(self) -> str:
         return "picam"
 
     def capture_image(self, path: str):
+        self.c.led = True
         # TODO: proper logging
         self.c.iso = self.iso
         time.sleep(self.delay)
