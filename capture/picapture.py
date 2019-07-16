@@ -49,7 +49,7 @@ class PiCapture(CaptureMethod):
         if not self.is_setup:
             self.setup()
         self.c.led = True
-        # TODO: proper logging
+        
         self.c.iso = self.iso
         time.sleep(self.delay)
         
