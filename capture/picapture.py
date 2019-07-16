@@ -54,12 +54,16 @@ class PiCapture(CaptureMethod):
         time.sleep(self.delay)
         
         if self.shutter_speed:
+            logger.info(f"Using shutter speed of {self.shutter_speed}")
             # use defined shutter speed
             self.c.shutter_speed = self.shutter_speed
+            self.c.exposure_mode = 'off'
+            self.c.awb_mode = 'off'
         else:
             # fix settings so images are more consistent
             # https://picamera.readthedocs.io/en/release-1.13/recipes1.html#capturing-consistent-images
             self.c.shutter_speed = self.c.exposure_speed
+            logger.info(f"Using auto shutter speed of {self.c.exposure_speed}")
             self.c.exposure_mode = 'off'
             g = self.c.awb_gains
             self.c.awb_mode = 'off'
