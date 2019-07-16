@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 config_file = 'config.yaml'
 ATTR_PI = 'pi_camera'
+ATTR_SHUTTER_SPEED = 'shutter'
 
 class PiCapture(CaptureMethod):
     def __init__(self):
@@ -29,6 +30,10 @@ class PiCapture(CaptureMethod):
         self.dimensions = (x, y)
         self.iso = config[ATTR_PI]['iso']
         self.delay = config[ATTR_PI]['delay']
+        if ATTR_SHUTTER_SPEED in config[ATTR_PI]:
+            self.shutter_speed = config[ATTR_PI][ATTR_SHUTTER_SPEED]
+        else:
+            self.shutter_speed = None
         # only create this once, memory issues
         self.c = picamera.PiCamera(resolution=self.dimensions)
         # led off while not capturing
@@ -48,13 +53,19 @@ class PiCapture(CaptureMethod):
         self.c.iso = self.iso
         time.sleep(self.delay)
         
-        # fix settings so images are more consistent
-        # https://picamera.readthedocs.io/en/release-1.13/recipes1.html#capturing-consistent-images
-        self.c.shutter_speed = self.c.exposure_speed
-        self.c.exposure_mode = 'off'
-        g = self.c.awb_gains
-        self.c.awb_mode = 'off'
-        self.c.awb_gains = g
+        if self.shutter_speed:
+            # use defined shutter speed
+            self.c.shutter_speed = self.shutter_speed
+        else:
+            # fix settings so images are more consistent
+            # https://picamera.readthedocs.io/en/release-1.13/recipes1.html#capturing-consistent-images
+            self.c.shutter_speed = self.c.exposure_speed
+            self.c.exposure_mode = 'off'
+            g = self.c.awb_gains
+            self.c.awb_mode = 'off'
+            self.c.awb_gains = g
+
+        # turn of led before capturing
         self.c.led = False
 
         # capture the image to the file
