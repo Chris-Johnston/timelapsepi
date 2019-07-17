@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 config_file = 'config.yaml'
 ATTR_PI = 'pi_camera'
 ATTR_SHUTTER_SPEED = 'shutter'
+ATTR_ISO = 'iso'
 
 class PiCapture(CaptureMethod):
     def __init__(self):
@@ -28,7 +29,10 @@ class PiCapture(CaptureMethod):
         x = config[ATTR_PI]['x']
         y = config[ATTR_PI]['y']
         self.dimensions = (x, y)
-        self.iso = config[ATTR_PI]['iso']
+        if ATTR_ISO in config[ATTR_PI]:
+            self.iso = config[ATTR_PI][ATTR_ISO]
+        else:
+            self.iso = None
         self.delay = config[ATTR_PI]['delay']
         if ATTR_SHUTTER_SPEED in config[ATTR_PI]:
             self.shutter_speed = config[ATTR_PI][ATTR_SHUTTER_SPEED]
@@ -49,26 +53,30 @@ class PiCapture(CaptureMethod):
         if not self.is_setup:
             self.setup()
         self.c.led = True
-        
-        self.c.iso = self.iso
-        time.sleep(self.delay)
-        
-        if self.shutter_speed:
-            logger.info(f"Using shutter speed of {self.shutter_speed}")
-            # use defined shutter speed
-            self.c.shutter_speed = self.shutter_speed
-            self.c.exposure_mode = 'off'
-            self.c.awb_mode = 'off'
-        else:
-            # fix settings so images are more consistent
-            # https://picamera.readthedocs.io/en/release-1.13/recipes1.html#capturing-consistent-images
-            self.c.shutter_speed = self.c.exposure_speed
-            logger.info(f"Using auto shutter speed of {self.c.exposure_speed}")
-            self.c.exposure_mode = 'off'
-            g = self.c.awb_gains
-            self.c.awb_mode = 'off'
-            self.c.awb_gains = g
 
+        # if iso specified
+        if self.iso:
+            self.c.iso = self.iso
+            time.sleep(self.delay)
+            
+            if self.shutter_speed:
+                logger.info(f"Using shutter speed of {self.shutter_speed}")
+                # use defined shutter speed
+                self.c.shutter_speed = self.shutter_speed
+                self.c.exposure_mode = 'off'
+                self.c.awb_mode = 'off'
+            else:
+                # fix settings so images are more consistent
+                # https://picamera.readthedocs.io/en/release-1.13/recipes1.html#capturing-consistent-images
+                self.c.shutter_speed = self.c.exposure_speed
+                logger.info(f"Using auto shutter speed of {self.c.exposure_speed}")
+                self.c.exposure_mode = 'off'
+                g = self.c.awb_gains
+                self.c.awb_mode = 'off'
+                self.c.awb_gains = g
+        else:
+            time.sleep(self.delay)
+        
         # turn of led before capturing
         self.c.led = False
 
