@@ -16,6 +16,7 @@ import datetime
 import yaml
 import logging
 from logging.handlers import RotatingFileHandler
+import json
 
 from invalidmethodexception import InvalidMethodException
 from capture.capturemethod import CaptureMethod
@@ -156,19 +157,51 @@ def run_actions_on_file(file: str, actions: dict, config) -> bool:
             return False
     return True
 
+def write_action_queue(file: str, queue: list):
+    """
+    Writes the queue of actions to json.
+    """
+    # create a new file if doesn't already exist
+    try:
+        with open(file, "w") as f:
+            logger.debug(f"Writing the action queue to file: {file}")
+            json.dump(queue, f)
+    except Exception as e:
+        logger.error(f"Exception when saving action queue to file: {e}")
+
+def load_action_queue(file: str) -> list:
+    """
+    loads the action queue from json.
+    if the file does not exist, returns an empty list.
+    """
+    if os.path.exists(file):
+        # open the file, load the queue
+        logger.debug("Loading the action queue.")
+        with open(file, "r") as f:
+            # assumption that this will be in the right format
+            return json.load(f)
+    else:
+        logger.info("Action queue file did not yet exist, so the queue is empty.")
+        return []
+    
+
+
 if __name__ == "__main__":
     # first-time setup
     modules = load_capture_types()
     actions = load_action_types()
     # queue of all files to process
     # if one step fails, then requeue it and retry all steps in order
-    action_queue = []
+    action_queue = load_action_queue(config["queue"])
 
     # background daemon
     while True:
         logger.info("Waiting for next capture.")
         sleep_next_capture(config["interval"], config["limit"]["min_time_seconds"], config["limit"]["max_time_seconds"])
         logger.info("Starting next capture.")
+
+        # re-load the queue
+        action_queue = load_action_queue(config["queue"])
 
         path = get_image_path(config["capture_directory"])
         # create directory if it doesn't exist
@@ -192,4 +225,7 @@ if __name__ == "__main__":
                 logger.info(f"Actions for file {f} failed, adding to queue.")
                 logger.debug(f"Queue: {' '.join(action_queue)}")
                 action_queue.append(f)
+
+                # failed action, write to the queue
+                write_action_queue(config["queue"], action_queue)
                 break
