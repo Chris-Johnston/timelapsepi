@@ -214,6 +214,9 @@ if __name__ == "__main__":
         logger.info(f"Capturing image using {method} method to file {path}")
         capture_image(path, m)
         action_queue.append(path)
+        
+        # write updated config before executing the queue
+        write_action_queue(config["queue"], action_queue)
 
         while action_queue:
             f = action_queue.pop()
@@ -225,7 +228,6 @@ if __name__ == "__main__":
                 logger.info(f"Actions for file {f} failed, adding to queue.")
                 logger.debug(f"Queue: {' '.join(action_queue)}")
                 action_queue.append(f)
-
-                # failed action, write to the queue
-                write_action_queue(config["queue"], action_queue)
                 break
+        # pass or fail, write the updated queue
+        write_action_queue(config["queue"], action_queue)
