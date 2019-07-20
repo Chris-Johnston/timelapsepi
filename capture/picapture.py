@@ -81,4 +81,8 @@ class PiCapture(CaptureMethod):
         self.c.led = False
 
         # capture the image to the file
-        self.c.capture(path)
+        try:
+            self.c.capture(path)
+        except picamera.exc.PiCameraMMALError:
+            logger.error(f'Could not capture image, out of resources.')
+        logger.debug(f'Captured image to path: {path}')
