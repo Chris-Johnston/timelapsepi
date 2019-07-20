@@ -221,6 +221,12 @@ if __name__ == "__main__":
         while action_queue:
             f = action_queue.pop()
             logging.info(f"Processing item {f} in queue.")
+
+            # ensure that the file exists before trying to process it
+            if not os.pah.exists(f):
+                logger.warning(f"Item {f} in queue did not exist. Skipping.")
+                continue
+
             # run each action in order on the file
             result = run_actions_on_file(f, actions, config)
             # on fail, queue
