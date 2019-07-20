@@ -223,7 +223,7 @@ if __name__ == "__main__":
             logging.info(f"Processing item {f} in queue.")
 
             # ensure that the file exists before trying to process it
-            if not os.pah.exists(f):
+            if not os.path.exists(f):
                 logger.warning(f"Item {f} in queue did not exist. Skipping.")
                 continue
 
