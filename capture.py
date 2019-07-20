@@ -15,6 +15,7 @@ import time
 import datetime
 import yaml
 import logging
+from logging.handlers import RotatingFileHandler
 
 from invalidmethodexception import InvalidMethodException
 from capture.capturemethod import CaptureMethod
@@ -38,6 +39,10 @@ logging.basicConfig(filename=config["logs"], level=numeric_log_level, format=log
 consoleHandler = logging.StreamHandler()
 consoleHandler.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(consoleHandler)
+
+# limit the size of the log files to 2gb
+file_handler = RotatingFileHandler(config["logs"], maxBytes=2147483648, backupCount=2)
+logging.getLogger().addHandler(file_handler)
 
 logger = logging.getLogger(__name__)
 logger.info("Starting timelapse application.")

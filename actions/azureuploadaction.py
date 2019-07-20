@@ -51,10 +51,11 @@ class AzureUploadAction(Action):
         if self.check_online():
             try:
                 self.blob_service.create_blob_from_path(self.blob_container, file, file, max_connections=1, timeout=self.timeout)
+                logging.info(f"Uploaded to Azure.")
                 return True
             except AzureException as ex:
                 logging.warning(f"Error while uploading to Azure while online: {ex}")
                 return False
         else:
-            logging.debug("Didn't upload file because offline.")
+            logging.warning("Didn't upload file because offline.")
             return False
