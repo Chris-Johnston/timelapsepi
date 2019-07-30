@@ -39,7 +39,7 @@ class AzureUploadAction(Action):
         Checks if the internet connection is up
         """
         try:
-            urllib.request.urlopen('http://www.github.com', timeout=1)
+            urllib.request.urlopen('http://www.google.com', timeout=30)
             logger.debug("Internet connection is up.")
             return True
         except:
