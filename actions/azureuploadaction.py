@@ -38,13 +38,9 @@ class AzureUploadAction(Action):
         """
         Checks if the internet connection is up
         """
-        try:
-            urllib.request.urlopen('http://www.github.com', timeout=1)
-            logger.debug("Internet connection is up.")
-            return True
-        except:
-            logger.info("Internet connection is down.")
-            return False
+        # TODO: re-implement check_online, this was acting inconsistently
+        # Could consider checking if interfaces are up, but for now going to let create_blob_from_path fail when offline
+        return True
 
     def run(self, file: str) -> bool:
         logging.info(f"Uploading file {file} to Azure.")
