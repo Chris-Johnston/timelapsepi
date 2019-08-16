@@ -198,6 +198,7 @@ if __name__ == "__main__":
     while True:
         # before anything else, process the queue
         while action_queue:
+            # TODO consider limiting the number of queue items to process at a time
             f = action_queue.pop()
             logging.info(f"Processing item {f} in queue.")
 
