@@ -196,6 +196,28 @@ if __name__ == "__main__":
 
     # background daemon
     while True:
+        # before anything else, process the queue
+        while action_queue:
+            f = action_queue.pop()
+            logging.info(f"Processing item {f} in queue.")
+
+            # ensure that the file exists before trying to process it
+            if not os.path.exists(f):
+                logger.warning(f"Item {f} in queue did not exist. Skipping.")
+                continue
+
+            # run each action in order on the file
+            result = run_actions_on_file(f, actions, config)
+            # on fail, queue
+            if not result:
+                logger.info(f"Actions for file {f} failed, adding to queue.")
+                logger.debug(f"Queue: {' '.join(action_queue)}")
+                action_queue.append(f)
+                break
+        # pass or fail, write the updated queue
+        write_action_queue(config["queue"], action_queue)
+
+        # after queue, start capturing
         logger.info("Waiting for next capture.")
         sleep_next_capture(config["interval"], config["limit"]["min_time_seconds"], config["limit"]["max_time_seconds"])
         logger.info("Starting next capture.")
@@ -216,24 +238,4 @@ if __name__ == "__main__":
         action_queue.append(path)
         
         # write updated config before executing the queue
-        write_action_queue(config["queue"], action_queue)
-
-        while action_queue:
-            f = action_queue.pop()
-            logging.info(f"Processing item {f} in queue.")
-
-            # ensure that the file exists before trying to process it
-            if not os.path.exists(f):
-                logger.warning(f"Item {f} in queue did not exist. Skipping.")
-                continue
-
-            # run each action in order on the file
-            result = run_actions_on_file(f, actions, config)
-            # on fail, queue
-            if not result:
-                logger.info(f"Actions for file {f} failed, adding to queue.")
-                logger.debug(f"Queue: {' '.join(action_queue)}")
-                action_queue.append(f)
-                break
-        # pass or fail, write the updated queue
         write_action_queue(config["queue"], action_queue)
